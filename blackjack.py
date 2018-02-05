@@ -1,4 +1,9 @@
 from __future__ import print_function
+import sys
+import time
+import random
+
+
 Rank_List = {"A":11, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, "10":10, "J":10, "Q":10, "K":10}
 Suit_List = ["Clubs", "Spade", "Diamond", "Heart"]
 # =======================================================================================================
@@ -29,23 +34,24 @@ class Hand(object):
 
     number_of_aces = 4
 # ---------------------------------------------
-    def __init__(self, soft_score = 0, hard_score = 0):
+    def __init__(self):
         self.cards_list = []
-        self.soft_score = soft_score
-        self.hard_score = hard_score
+        self.soft_score = 0
+        self.hard_score = 0
 # ---------------------------------------------
     def add_card(self, card):
         """Used to add a card to the hand"""
-        self.cards_list.append(card)
         if card.get_rank() == "A":
             Hand.number_of_aces -= 1
+
+        self.cards_list.append(card)
 # ---------------------------------------------
     def get_hard_value(self):
         """Tells us the score of the hand (Hard Score)"""
+        self.reset_score()
         for card in self.cards_list:
             self.hard_score += Rank_List[ card.get_rank() ]
 
-        self.soft_score = self.hard_score
         return self.hard_score
 # ---------------------------------------------
     def get_soft_value(self):
@@ -62,11 +68,15 @@ class Hand(object):
 # ---------------------------------------------
     def get_cards(self):
         return self.cards_list
+
+    def reset_score(self):
+        setattr(self, 'soft_score', 0)
+        setattr(self, 'hard_score', 0)
 # ---------------------------------------------
     def __str__(self):
         return "Cards List: %s, Hard Score: %s, Soft Score: %s" %(self.get_cards(), self.get_hard_value(), self.get_soft_value())
 # =======================================================================================================
-import random
+# import random
 
 class Deck(object):
     """It represents the pack of 52 cards. It is used to deal cards to the dealer and player"""
@@ -90,13 +100,16 @@ class Deck(object):
         return Deck.cards_list.pop()
 
 # =======================================================================================================
-import sys
-import time
+# import sys
+# import time
+# from __future__ import print_function
+
+
 class Play(object):
     """This class is responsible for handling the flow of the game"""
 
     # Private attributes
-    ــplayer_round = True
+    __player_round = True
     __blackjack = False
     __lost = False
 # ---------------------------------------------
@@ -125,17 +138,19 @@ class Play(object):
 
 
     def display_deck(self):
-        if Play.ــplayer_round:
+        if Play.__player_round:
             dealer_cards_list = self.dealer.get_cards()
             print ("Dealer: [",dealer_cards_list[0],",** of ******] Score: ",Rank_List[ dealer_cards_list[0].get_rank() ])
-            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_value())
-            print ("Wins: ", self.won, "Loses: ", self.lose_count)
+            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_score())
+            print ("Wins: ", self.win_count, "Loses: ", self.lose_count)
         else:
-            print ("Dealer: ",self.dealer.get_cards(), "Score: ", self.dealer.get_value())
-            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_value())
-            print ("Wins: ", self.won, "Loses: ", self.lose_count)
+            print("Cards: ", len(self.deck.cards_list))
+            print ("Dealer: ")
+            print ("Dealer: ",self.dealer.get_cards(), "Score: ", self.dealer.get_score())
+            print ("Player: ")
+            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_score())
+            print ("Wins: ", self.win_count, "Loses: ", self.lose_count)
 
-        self.clear_terminal(0.4)
 
 
 # ---------------------------------------------
@@ -157,7 +172,7 @@ class Play(object):
                 continue
 # ---------------------------------------------
 
-    def clear_terminal(self, time):
+    def clear_terminal(self, wait):
 
         print("\033[H\033[J")
         sys.stdout.flush()
@@ -174,6 +189,104 @@ class Play(object):
         """Used when the player wants to Hit. It adds a card to the player's deck. It also checks if player/dealer busted
         while invoking hit. Also if player reaches 21, it displays message of blackjack."""
 
+
+        # Major While Loop begins in main-------------------------------------------------------------------------------------------------
+
+        print ("Welcome to blackjack")
+
+        self.deck.shufle()
+
+        self.dealer.add_card(self.deck.deal_card())
+        self.dealer.add_card(self.deck.deal_card())
+
+        self.player.add_card(self.deck.deal_card())
+        self.player.add_card(self.deck.deal_card())
+
+        self.display_deck()
+
+        if self.player.get_score() == 21:
+            print ("Blackjack!")
+            self.win_count += 1
+            self.clear_terminal(0.4)
+            self.restart()
+
+        # while loop for player begins ----------------------------------------------------------
+        while True:
+            self.display_deck()
+
+
+            if self.player_input():
+                self.player.add_card(self.deck.deal_card())
+                self.display_deck()
+
+
+            if self.player.get_score() > 21:
+                print ("You lost!")
+                self.lose_count += 1
+                Play.__lost = True
+                break
+
+            if self.player.get_score() == 21:
+                print ("Yout won, Blackjack")
+                Play.__blackjack = True
+                self.win_count += 1
+                break
+
+            else:
+                break
+
+        # while loop for player ends ----------------------------------------------------------
+
+        self.display_deck()
+
+
+        # check to see if you hit blackjack or you have lost
+        if Play.__blackjack or Play.__lost:
+            self.restart()
+
+        # Now display_deck() will show the hand of dealer completely
+        Play.__player_round = False
+
+
+        self.display_deck()
+
+
+        # while loop for dealer begins --------------------------------------------------------
+        while True:
+            if self.dealer.get_score() <= 17:
+                self.dealer.add_card(self.deck.deal_card())
+                continue
+            else:
+                break
+        # while loop for dealer ends --------------------------------------------------------
+
+
+        # Check for the win ----------------------------------
+        if self.player.get_score() >= self.dealer.get_score():
+            print ("Player won")
+            self.win_count += 1
+
+        else:
+            print ("Dealer won")
+            self.lose_count += 1
+
+
+        self.restart()
+        # Major While Loop ends-------------------------------------------------------------------------------------------------
+#
+# =======================================================================================================
+
+def main():
+
+
+    while True:
+        new_game = Play()
+        if new_game.start():
+            continue
+# =======================================================================================================
+
+if __name__ == "__main__":
+    main()
 
         # # Major While Loop begins-------------------------------------------------------------------------------------------------
         # while True:
@@ -238,7 +351,7 @@ class Play(object):
         #             continue
 
         #     # Now display_deck() will show the hand of dealer completely
-        #     Play.ــplayer_round = False
+        #     Play.__player_round = False
 
 
         #     self.display_deck()
@@ -267,152 +380,3 @@ class Play(object):
         #     if self.restart():
         #         continue
         # Major While Loop ends-------------------------------------------------------------------------------------------------
-# ---------------------------------------------
-
-        # Major While Loop begins-------------------------------------------------------------------------------------------------
-
-        print ("Welcome to blackjack")
-
-        print (self.deck.cards_list)
-        self.deck.shufle()
-
-        self.player.add_card(self.deck.deal_card())
-        self.player.add_card(self.deck.deal_card())
-
-
-        self.dealer.add_card(self.deck.deal_card())
-        self.dealer.add_card(self.deck.deal_card())
-
-        self.display_deck()
-
-        if self.player.get_score() == 21:
-            print ("Blackjack!")
-            self.win_count += 1
-            self.restart()
-
-        # while loop for player begins ----------------------------------------------------------
-        while True:
-            self.display_deck()
-
-
-            if self.player_input():
-                self.player.add_card(self.deck.deal_card())
-                self.display_deck()
-
-
-                if self.player.get_score() > 21:
-                    print ("You lost!")
-                    self.lose_count += 1
-                    Play.__lost = True
-                    break
-
-                elif self.player.get_score() == 21:
-                    print ("Yout won, Blackjack")
-                    Play.__blackjack = True
-                    self.win_count += 1
-                    break
-
-                else:
-                    continue
-
-            else:
-                break
-        # while loop for player ends ----------------------------------------------------------
-
-        self.display_deck()
-
-
-        # check to see if you hit blackjack or you have lost
-        if Play.__blackjack or Play.__lost:
-            self.restart()
-
-        # Now display_deck() will show the hand of dealer completely
-        Play.ــplayer_round = False
-
-
-        self.display_deck()
-
-
-        # while loop for dealer begins --------------------------------------------------------
-        while True:
-            if self.dealer.get_score() <= 17:
-                self.dealer.add_card(self.deck.deal_card())
-                continue
-            else:
-                break
-        # while loop for dealer ends --------------------------------------------------------
-
-
-        # Check for the win ----------------------------------
-        if self.player.get_score() >= self.dealer.get_score():
-            print ("Player won")
-            self.win_count += 1
-
-        else:
-            print ("Dealer won")
-            self.lose_count += 1
-
-
-        self.restart()
-        # Major While Loop ends-------------------------------------------------------------------------------------------------
-#
-# =======================================================================================================
-
-def main():
-
-    new_game = Play()
-    new_game.mydeck.shufle()
-    new_game.dealer.add_card(new_game.mydeck.deal_card())
-    new_game.dealer.add_card(new_game.mydeck.deal_card())
-
-    new_game.player.add_card(new_game.mydeck.deal_card())
-    new_game.player.add_card(new_game.mydeck.deal_card())
-
-    new_game.display_deck()
-
-    # newDeck = Deck()
-
-
-
-    # newDeck.shufle()
-
-
-    # # print newDeck.cards_list
-
-
-    # # create new hands
-    # player = Hand()
-    # dealer = Hand()
-
-    # # before poping the last card into a hand count all the cards
-    # count = 0
-    # for i in Deck.cards_list:
-    #     count += 1
-
-
-    # # -----------------------------------------
-    # player.add_card(newDeck.deal_card())
-
-    # count_player = 0
-    # for i in Deck.cards_list:
-    #     count_player += 1
-
-
-    # #------------------------------------------
-    # dealer.add_card(newDeck.deal_card())
-
-
-    # count_dealer = 0
-    # for i in Deck.cards_list:
-    #     count_dealer += 1
-
-
-    # # -----------------------------------------
-    # print "Total Cards: ", count
-    # print "Player: ", player, "Count: ", count_player
-    # print "Dealer: ", dealer, "Count: ", count_dealer
-
-# =======================================================================================================
-
-if __name__ == "__main__":
-    main()
