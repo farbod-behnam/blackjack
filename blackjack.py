@@ -15,90 +15,100 @@ class Card(object):
         self.suit = suit
         self.rank = rank
 # ---------------------------------------------
+    def __str__(self):
+        return "%s of %s " %(self.rank, self.suit)
+# ---------------------------------------------
+    def __repr__(self):
+        return str(self)
+# ---------------------------------------------
     def get_rank(self):
         """Tells us the rank of the card: 2, 3, A, K etc."""
-        return getattr(self, "rank")
+        return self.rank
 # ---------------------------------------------
     def get_suit(self):
         """Tells us the suit of the card: Clubs, Spade, Diamond and Hearts"""
-        return getattr(self, "suit")
-# ---------------------------------------------
-    def __str__(self):
-        return "%s of %s " %(self.get_rank(), self.get_suit())
+        return self.suit
 
-    def __repr__(self):
-        return str(self)
+
 # =======================================================================================================
 class Hand(object):
     """It repesents the hand of dealer or player"""
 
-    number_of_aces = 4
 # ---------------------------------------------
     def __init__(self):
         self.cards_list = []
-        self.soft_score = 0
-        self.hard_score = 0
+        self.score = 0
+        # to determine wheter our ace has 1 or 11 points
+        self.ace = False
+# ---------------------------------------------
+    def __str__(self):
+        cards_in_hand = ""
+        for card in self.cards_list:
+            card_name = card.__str__()
+            cards_in_hand += " " + card_name
+
+        return "The hand contains: %s" %cards_in_hand
 # ---------------------------------------------
     def add_card(self, card):
         """Used to add a card to the hand"""
-        if card.get_rank() == "A":
-            Hand.number_of_aces -= 1
-
         self.cards_list.append(card)
+
+        if card.get_rank() == 'A':
+            self.ace = True
+
+        self.score += Rank_List[ card.get_rank() ]
 # ---------------------------------------------
-    def get_hard_value(self):
-        """Tells us the score of the hand (Hard Score)"""
-        self.reset_score()
-        for card in self.cards_list:
-            self.hard_score += Rank_List[ card.get_rank() ]
-
-        return self.hard_score
-# ---------------------------------------------
-    def get_soft_value(self):
-        """Tells us the soft value of the hand"""
-        self.soft_score = self.hard_score - 10
-
-        return self.soft_score
-
     def get_score(self):
-        if self.get_hard_value() > 21 and Hand.number_of_aces > 0:
-            return self.get_soft_value()
-
-        return self.get_hard_value()
+        """Tells us the score of the hand"""
+        if self.ace == True and self.score < 12:
+            return self.score + 10
+        else:
+            return self.score
 # ---------------------------------------------
     def get_cards(self):
         return self.cards_list
-
-    def reset_score(self):
-        setattr(self, 'soft_score', 0)
-        setattr(self, 'hard_score', 0)
 # ---------------------------------------------
-    def __str__(self):
-        return "Cards List: %s, Hard Score: %s, Soft Score: %s" %(self.get_cards(), self.get_hard_value(), self.get_soft_value())
+    def draw(self, hidden, playing):
+        # playing boolean is used to know if hand is in play
+        if hidden == True and playing == True:
+            # Don't show first hidden card
+            starting_card = 1
+        else:
+            starting_card = 0
+
+        for index in range(starting_card, len(self.cards_list)):
+            print (self.cards_list[index])
 # =======================================================================================================
 # import random
 
 class Deck(object):
     """It represents the pack of 52 cards. It is used to deal cards to the dealer and player"""
 
-    # private attribute
-    cards_list = []
 
 # ---------------------------------------------
     def __init__(self):
+        self.cards_list = []
         for suit in Suit_List:
             for rank in Rank_List.keys():
-                Deck.cards_list.append(Card(suit, rank))
+                self.cards_list.append(Card(suit, rank))
+
+# ---------------------------------------------
+    def __str__(self):
+        deck_set = ""
+
+        for card in self.cards_list:
+            deck_set += " " + card.__str__()
+
+        return "The deck has: %s" %deck_set
 
 # ---------------------------------------------
     def shufle(self):
         """shuffles the cards in the deck using random method of python"""
-        random.shuffle(Deck.cards_list)
+        random.shuffle(self.cards_list)
 # ---------------------------------------------
     def deal_card(self):
         """pops card from deck and returns the cards"""
-        return Deck.cards_list.pop()
-
+        return self.cards_list.pop()
 # =======================================================================================================
 # import sys
 # import time
@@ -109,18 +119,42 @@ class Play(object):
     """This class is responsible for handling the flow of the game"""
 
     # Private attributes
-    __player_round = True
-    __blackjack = False
-    __lost = False
 # ---------------------------------------------
 
     def __init__(self):
         self.deck = Deck()
-        self.player = Hand()
-        self.dealer = Hand()
-        self.win_count = 0
-        self.lose_count = 0
+        self.player_hand = Hand()
+        self.dealer_hand = Hand()
+        self.bet = 0
+        # boolean to know if hand is in play
+        self.playing = False
+        self.chip_pool = 100
+        self.game_result = ""
 # ---------------------------------------------
+    def get_bet(self):
+        return self.bet
+
+    def set_bet(self, bet):
+        self.bet = bet
+# -------------------------
+    def get_playing(self):
+        return self.playing
+
+    def set_playing(self, playing):
+        self.playing = playing
+# -------------------------
+    def get_chip_pool(self):
+        return self.chip_pool
+
+    def set_chip_pool(self, chip_pool):
+        self.chip_pool = chip_pool
+# -------------------------
+    def get_game_result(self):
+        return self.game_result
+
+    def set_game_result(self, game_result):
+        self.game_result = game_result
+# -------------------------
 
     def player_input(self):
         while True:
@@ -135,27 +169,110 @@ class Play(object):
                 continue
 
 # ---------------------------------------------
+    def make_bet(self):
 
+        while True:
+            bet_temp = raw_input("What amount of chips would you like to bet? (Enter just integer please): ")
+            try:
+                bet_temp = int(bet_temp)
+            except:
+                print ("Please enter \"integer\" only\n")
+                continue
 
-    def display_deck(self):
-        if Play.__player_round:
-            dealer_cards_list = self.dealer.get_cards()
-            print ("Dealer: [",dealer_cards_list[0],",** of ******] Score: ",Rank_List[ dealer_cards_list[0].get_rank() ])
-            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_score())
-            print ("Wins: ", self.win_count, "Loses: ", self.lose_count)
-        else:
-            print("Cards: ", len(self.deck.cards_list))
-            print ("Dealer: ")
-            print ("Dealer: ",self.dealer.get_cards(), "Score: ", self.dealer.get_score())
-            print ("Player: ")
-            print ("Player: ",self.player.get_cards(), "Score: ", self.player.get_score())
-            print ("Wins: ", self.win_count, "Loses: ", self.lose_count)
+            if bet_temp >= 1 and bet_temp <= self.chip_pool:
+                self.bet = bet_temp
+                break
+            else:
+                print ("Invalid bet, you only have " + str(self.chip_pool) + " remaining\n")
+                continue
+# ---------------------------------------------
+    def deal_cards(self):
 
+        self.player_hand.add_card(self.deck.deal_card())
+        self.player_hand.add_card(self.deck.deal_card())
 
+        self.dealer_hand.add_card(self.deck.deal_card())
+        self.dealer_hand.add_card(self.deck.deal_card())
+
+        if self.playing == True:
+            print ("Fold, Sorry")
+            self.chip_pool -= self.bet
+
+        # Set up to know currently playing hand
+        self.playing = True
+# ---------------------------------------------
+    def hit(self):
+
+        while self.player_input() and self.playing:
+            if self.player_hand.get_score() <= 21:
+                self.player_hand.add_card(self.deck.deal_card())
+
+            print ("Player hand is %s" %self.player_hand)
+
+            if self.player_hand.get_score() > 21:
+                self.game_result = "You Busted"
+
+                self.chip_pool -= self.bet
+                self.playing = False
+                break
 
 # ---------------------------------------------
+    def stand(self):
+
+        while self.dealer_hand.get_score() < 17 and self.playing:
+            self.dealer_hand.add_card(self.deck.deal_card())
 
 
+        # Dealer Busts
+        if self.dealer_hand.get_score() > 21:
+            self.game_result = "Dealer busts! You win!"
+            self.chip_pool += self.bet
+            self.playing = False
+
+        # Player has better hand than dealer
+        elif self.dealer_hand.get_score() < self.player_hand.get_score():
+            self.game_result = "You beat the dealer, you win!"
+            self.chip_pool += self.bet
+            self.playing = False
+
+        # Push
+        elif self.dealer_hand.get_score() == self.player_hand.get_score():
+            self.game_result = "Tied up, push!"
+            self.playing = False
+
+        # Dealer beats player
+        else:
+            self.game_result = "Dealer Wins!"
+            self.chip_pool -= self.bet
+            self.playing = False
+# ---------------------------------------------
+    def game_status(self):
+        """Print game status"""
+
+        # Display Player Hand
+        print ("Player Hand is: ")
+        self.player_hand.draw(hidden = False, playing = self.playing)
+
+        print ("Player hand total is: " + str(self.player_hand.get_score()) )
+
+        # Display Dealer Hand
+        print ("Dealer Hand is: ")
+        self.dealer_hand.draw(hidden = True, playing = self.playing)
+
+        # If game round is over
+        if self.playing == False:
+            print (" --- for a total of " + str(self.dealer_hand.get_score()))
+            print ("Chip Total: " + str(self.chip_pool))
+
+        # Otherwise, don't know the second card yet of dealer
+        else:
+            print ("With another card hidden upside down")
+
+
+        # Print result of hit or stand
+        print (self.game_result)
+
+# ---------------------------------------------
     def restart(self):
         while True:
             answer = raw_input ("\n\nDo you want to play again? (y or n): ")
@@ -166,6 +283,7 @@ class Play(object):
                 self.clear_terminal (0.4)
                 return True
             elif answer[0] == "n":
+                print ("Thank you for playing")
                 sys.exit (0)
             else:
                 print ("\n\nplease answer \"y\" or \"n\"!\n")
@@ -183,200 +301,28 @@ class Play(object):
         # sleep for # seconds
         time.sleep(wait)
 # ---------------------------------------------
-
-
-    def start(self):
-        """Used when the player wants to Hit. It adds a card to the player's deck. It also checks if player/dealer busted
-        while invoking hit. Also if player reaches 21, it displays message of blackjack."""
-
-
-        # Major While Loop begins in main-------------------------------------------------------------------------------------------------
-
-        print ("Welcome to blackjack")
-
-        self.deck.shufle()
-
-        self.dealer.add_card(self.deck.deal_card())
-        self.dealer.add_card(self.deck.deal_card())
-
-        self.player.add_card(self.deck.deal_card())
-        self.player.add_card(self.deck.deal_card())
-
-        self.display_deck()
-
-        if self.player.get_score() == 21:
-            print ("Blackjack!")
-            self.win_count += 1
-            self.clear_terminal(0.4)
-            self.restart()
-
-        # while loop for player begins ----------------------------------------------------------
-        while True:
-            self.display_deck()
-
-
-            if self.player_input():
-                self.player.add_card(self.deck.deal_card())
-                self.display_deck()
-
-
-            if self.player.get_score() > 21:
-                print ("You lost!")
-                self.lose_count += 1
-                Play.__lost = True
-                break
-
-            if self.player.get_score() == 21:
-                print ("Yout won, Blackjack")
-                Play.__blackjack = True
-                self.win_count += 1
-                break
-
-            else:
-                break
-
-        # while loop for player ends ----------------------------------------------------------
-
-        self.display_deck()
-
-
-        # check to see if you hit blackjack or you have lost
-        if Play.__blackjack or Play.__lost:
-            self.restart()
-
-        # Now display_deck() will show the hand of dealer completely
-        Play.__player_round = False
-
-
-        self.display_deck()
-
-
-        # while loop for dealer begins --------------------------------------------------------
-        while True:
-            if self.dealer.get_score() <= 17:
-                self.dealer.add_card(self.deck.deal_card())
-                continue
-            else:
-                break
-        # while loop for dealer ends --------------------------------------------------------
-
-
-        # Check for the win ----------------------------------
-        if self.player.get_score() >= self.dealer.get_score():
-            print ("Player won")
-            self.win_count += 1
-
-        else:
-            print ("Dealer won")
-            self.lose_count += 1
-
-
-        self.restart()
-        # Major While Loop ends-------------------------------------------------------------------------------------------------
-#
 # =======================================================================================================
 
 def main():
 
 
     while True:
+
+
         new_game = Play()
-        if new_game.start():
+
+        while new_game.get_chip_pool() > 0:
+            new_game.make_bet()
+            new_game.deal_cards()
+            new_game.game_status()
+            new_game.hit()
+            new_game.game_status()
+            new_game.stand()
+            new_game.game_status()
+
+        if new_game.restart():
             continue
 # =======================================================================================================
 
 if __name__ == "__main__":
     main()
-
-        # # Major While Loop begins-------------------------------------------------------------------------------------------------
-        # while True:
-
-        #     print ("Welcome to blackjack")
-
-        #     print (self.deck.cards_list)
-        #     self.deck.shufle()
-
-        #     self.player.add_card(self.deck.deal_card())
-        #     self.player.add_card(self.deck.deal_card())
-
-
-        #     self.dealer.add_card(self.deck.deal_card())
-        #     self.dealer.add_card(self.deck.deal_card())
-
-        #     self.display_deck()
-
-        #     if self.player.get_score() == 21:
-        #         print ("Blackjack!")
-        #         self.win_count += 1
-        #         if self.restart():
-        #             continue
-        #         else:
-        #             return False
-
-        #     # while loop for player begins ----------------------------------------------------------
-        #     while True:
-        #         self.display_deck()
-
-
-        #         if self.player_input():
-        #             self.player.add_card(self.deck.deal_card())
-        #             self.display_deck()
-
-
-        #             if self.player.get_score() > 21:
-        #                 print ("You lost!")
-        #                 self.lose_count += 1
-        #                 Play.__lost = True
-        #                 break
-
-        #             elif self.player.get_score() == 21:
-        #                 print ("Yout won, Blackjack")
-        #                 Play.__blackjack = True
-        #                 self.win_count += 1
-        #                 break
-
-        #             else:
-        #                 continue
-
-        #         else:
-        #             break
-        #     # while loop for player ends ----------------------------------------------------------
-
-        #     self.display_deck()
-
-
-        #     # check to see if you hit blackjack or you have lost
-        #     if Play.__blackjack or Play.__lost:
-        #         if self.restart():
-        #             continue
-
-        #     # Now display_deck() will show the hand of dealer completely
-        #     Play.__player_round = False
-
-
-        #     self.display_deck()
-
-
-        #     # while loop for dealer begins --------------------------------------------------------
-        #     while True:
-        #         if self.dealer.get_score() <= 17:
-        #             self.dealer.add_card(self.deck.deal_card())
-        #             continue
-        #         else:
-        #             break
-        #     # while loop for dealer ends --------------------------------------------------------
-
-
-        #     # Check for the win ----------------------------------
-        #     if self.player.get_score() >= self.dealer.get_score():
-        #         print ("Player won")
-        #         self.win_count += 1
-
-        #     else:
-        #         print ("Dealer won")
-        #         self.lose_count += 1
-
-
-        #     if self.restart():
-        #         continue
-        # Major While Loop ends-------------------------------------------------------------------------------------------------
