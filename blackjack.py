@@ -178,19 +178,27 @@ class Play(object):
     def make_bet(self):
 
         while True:
-            bet_temp = raw_input("What amount of chips would you like to bet? (Enter just integer please): ")
-            try:
-                bet_temp = int(bet_temp)
-            except:
-                print ("Please enter \"integer\" only\n")
-                continue
+            bet_temp = raw_input("What amount of chips would you like to bet? (Enter just integer please) or \"q\" to quit: ")
 
-            if bet_temp >= 1 and bet_temp <= self.chip_pool:
-                self.bet = bet_temp
-                break
-            else:
-                print ("Invalid bet, you only have " + str(self.chip_pool) + " remaining\n")
-                continue
+            # -------------------------
+            # If player wanted to quit the game
+            if bet_temp[:1] == "q":
+                sys.exit(0)
+            #-------------------------
+            # If player intered an integer or somehing other than "q"
+            elif bet_temp[:1] != "q":
+                try:
+                    bet_temp = int(bet_temp)
+                except:
+                    print ("\nPlease enter \"integer\" or \"q\" only!\n")
+                    continue
+
+                if bet_temp >= 1 and bet_temp <= self.chip_pool:
+                    self.bet = bet_temp
+                    break
+                else:
+                    print ("Invalid bet, you only have " + str(self.chip_pool) + " remaining\n")
+                    continue
 # ---------------------------------------------
     def deal_cards(self):
 
