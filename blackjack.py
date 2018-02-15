@@ -333,7 +333,6 @@ def main():
             new_game.deal_cards()
             new_game.game_status()
             new_game.hit()
-            # new_game.game_status()
             new_game.stand()
             new_game.game_status()
 
