@@ -16,7 +16,7 @@ class Card(object):
         self.rank = rank
 # ---------------------------------------------
     def __str__(self):
-        return "%s of %s " %(self.rank, self.suit)
+        return "[%s of %s] " %(self.rank, self.suit)
 # ---------------------------------------------
     def __repr__(self):
         return str(self)
@@ -47,7 +47,7 @@ class Hand(object):
             card_name = card.__str__()
             cards_in_hand += " " + card_name
 
-        return "The hand contains: %s" %cards_in_hand
+        return "contains: %s" %cards_in_hand
 # ---------------------------------------------
     def add_card(self, card):
         """Used to add a card to the hand"""
@@ -64,6 +64,10 @@ class Hand(object):
             return self.score + 10
         else:
             return self.score
+# ---------------------------------------------
+    def reset_hand(self):
+        self.cards_list = []
+        self.score = 0
 # ---------------------------------------------
     def get_cards(self):
         return self.cards_list
@@ -158,12 +162,14 @@ class Play(object):
 
     def player_input(self):
         while True:
-            input = raw_input("Press \"Enter(return) or e\" to hit you otherwise enter \"stop or s\": ")
+            input = raw_input("Press \"Enter(return) or e\" to hit otherwise enter \"stop or s\" or \"q\" to quit the game: ")
             input = input[:1].lower()
             if input == "" or input == "e":
                 return True
             elif input == "s":
                 return False
+            elif input == "q":
+                sys.exit(0)
             else:
                 print ("Please press enter or type \"stop or s\"")
                 continue
@@ -203,11 +209,12 @@ class Play(object):
 # ---------------------------------------------
     def hit(self):
 
-        while self.player_input() and self.playing:
+        while self.player_input():
             if self.player_hand.get_score() <= 21:
                 self.player_hand.add_card(self.deck.deal_card())
 
-            print ("Player hand is %s" %self.player_hand)
+            time.sleep(0.4)
+            print ("\nPlayer hand %s\n" %self.player_hand)
 
             if self.player_hand.get_score() > 21:
                 self.game_result = "You Busted"
@@ -219,36 +226,40 @@ class Play(object):
 # ---------------------------------------------
     def stand(self):
 
-        while self.dealer_hand.get_score() < 17 and self.playing:
-            self.dealer_hand.add_card(self.deck.deal_card())
+        # If the game is still being played
+        if self.playing:
+
+            while self.dealer_hand.get_score() < 17 and self.playing:
+                self.dealer_hand.add_card(self.deck.deal_card())
 
 
-        # Dealer Busts
-        if self.dealer_hand.get_score() > 21:
-            self.game_result = "Dealer busts! You win!"
-            self.chip_pool += self.bet
-            self.playing = False
+            # Dealer Busts
+            if self.dealer_hand.get_score() > 21:
+                self.game_result = "Dealer busts! You win!"
+                self.chip_pool += self.bet
+                self.playing = False
 
-        # Player has better hand than dealer
-        elif self.dealer_hand.get_score() < self.player_hand.get_score():
-            self.game_result = "You beat the dealer, you win!"
-            self.chip_pool += self.bet
-            self.playing = False
+            # Player has better hand than dealer
+            elif self.dealer_hand.get_score() < self.player_hand.get_score() and self.player_hand.get_score() <= 21:
+                self.game_result = "You beat the dealer, you win!"
+                self.chip_pool += self.bet
+                self.playing = False
 
-        # Push
-        elif self.dealer_hand.get_score() == self.player_hand.get_score():
-            self.game_result = "Tied up, push!"
-            self.playing = False
+            # Push
+            elif self.dealer_hand.get_score() == self.player_hand.get_score():
+                self.game_result = "Tied up, push!"
+                self.playing = False
 
-        # Dealer beats player
-        else:
-            self.game_result = "Dealer Wins!"
-            self.chip_pool -= self.bet
-            self.playing = False
+            # Dealer beats player
+            else:
+                self.game_result = "Dealer Wins!"
+                self.chip_pool -= self.bet
+                self.playing = False
 # ---------------------------------------------
     def game_status(self):
         """Print game status"""
 
+        time.sleep(0.4)
         # Display Player Hand
         print ("Player Hand is: ")
         self.player_hand.draw(hidden = False, playing = self.playing)
@@ -270,8 +281,12 @@ class Play(object):
 
 
         # Print result of hit or stand
-        print (self.game_result)
+        print ("\n" + self.game_result + "\n")
 
+# ---------------------------------------------
+    def reset_hands(self):
+        self.dealer_hand.reset_hand()
+        self.player_hand.reset_hand()
 # ---------------------------------------------
     def restart(self):
         while True:
@@ -312,11 +327,13 @@ def main():
         new_game = Play()
 
         while new_game.get_chip_pool() > 0:
+            new_game.set_game_result("")
+            new_game.reset_hands()
             new_game.make_bet()
             new_game.deal_cards()
             new_game.game_status()
             new_game.hit()
-            new_game.game_status()
+            # new_game.game_status()
             new_game.stand()
             new_game.game_status()
 
