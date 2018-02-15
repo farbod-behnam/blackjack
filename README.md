@@ -27,4 +27,4 @@ python blackjack.py
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
+* [Blackjack OOP](https://github.com/bfarbod/blackjack/blob/master/Blackjack%20implementation%20guide.pdf) - PDF file for implementing blackjack from Object Oriented Programming perspective
