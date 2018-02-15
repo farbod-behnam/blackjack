@@ -269,18 +269,18 @@ class Play(object):
 
         time.sleep(0.4)
         # Display Player Hand
-        print ("Player Hand is: ")
+        print ("\nPlayer Hand is: ")
         self.player_hand.draw(hidden = False, playing = self.playing)
 
         print ("Player hand total is: " + str(self.player_hand.get_score()) )
 
         # Display Dealer Hand
-        print ("Dealer Hand is: ")
+        print ("\nDealer Hand is: ")
         self.dealer_hand.draw(hidden = True, playing = self.playing)
 
         # If game round is over
         if self.playing == False:
-            print (" --- for a total of " + str(self.dealer_hand.get_score()))
+            print ("\n --- for a total of " + str(self.dealer_hand.get_score()))
             print ("Chip Total: " + str(self.chip_pool))
 
         # Otherwise, don't know the second card yet of dealer
@@ -295,6 +295,7 @@ class Play(object):
     def reset_hands(self):
         self.dealer_hand.reset_hand()
         self.player_hand.reset_hand()
+        self.set_game_result("")
 # ---------------------------------------------
     def restart(self):
         while True:
@@ -335,7 +336,6 @@ def main():
         new_game = Play()
 
         while new_game.get_chip_pool() > 0:
-            new_game.set_game_result("")
             new_game.reset_hands()
             new_game.make_bet()
             new_game.deal_cards()
