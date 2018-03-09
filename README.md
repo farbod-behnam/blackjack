@@ -16,13 +16,13 @@ Blackjack game with only one player. PDF file helped me to implement it but for 
 * and execute the program with python 2.7
 
 ```
-python2 blackjack.py
+python2 main.py
 ```
 
 Or if you know that python 2.7 is the primary python in you operation system instead of python 3.6 then
 
 ```
-python blackjack.py
+python main.py
 ```
 
 ## Built With
