@@ -306,7 +306,7 @@ class Play(object):
 #-----------------------------------------------------------------------------------
 # clear_terminal
 # -----------------------------------------------------------------------------------
-    def clear_terminal (wait):
+    def clear_terminal (self, wait):
         """
         preparation: It clears the terminal
         IN; Nothing

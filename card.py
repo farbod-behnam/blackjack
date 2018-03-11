@@ -1,4 +1,4 @@
-Rank_List = {"A":11, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, "10":10, "J":10, "Q":10, "K":10}
+Rank_Dict = {"A":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8, "9":9, "10":10, "J":10, "Q":10, "K":10}
 Suit_List = ["Clubs", "Spade", "Diamond", "Heart"]
 
 
@@ -17,11 +17,23 @@ class Card(object):
         return str(self)
 # ---------------------------------------------
     def get_rank(self):
-        """Tells us the rank of the card: 2, 3, A, K etc."""
+        """
+    	get_rank: Tells us the rank of the card: 2, 3, A, K etc.
+    	IN: Nothing
+    	RETURN: Nothing
+    	MODIFIES: Nothing
+    	CALL: Nothing
+    	"""
         return self.rank
 # ---------------------------------------------
     def get_suit(self):
-        """Tells us the suit of the card: Clubs, Spade, Diamond and Hearts"""
+        """
+    	get_suit: Tells us the suit of the card: Clubs, Spade, Diamond and Hearts
+    	IN: Nothing
+    	RETURN: Nothing
+    	MODIFIES: Nothing
+    	CALL: Nothing
+    	"""
         return self.suit
 
 
